@@ -92,7 +92,7 @@ EOF_RBSYN
 
   echo "[RbSyn] Running bench on ${wslRelPath}"
   cd "${wslRepoRoot}"
-  CONSOLE_LOG=1 bundle exec rake bench TEST="${wslRelPath}"
+  bundle exec rake bench TEST="${wslRelPath}"
 '`.trim();
         term.sendText(wslScript);
         vscode.window.showInformationMessage(

@@ -1,8 +1,8 @@
 // extension.ts
 // VS Code extension entrypoint for "rubysyn-extension.codeGen"
-import * as vscode from 'vscode';
-import * as fs from 'fs';
-import * as path from 'path';
+import * as vscode from "vscode";
+import * as fs from "fs";
+import * as path from "path";
 
 function ensureUriFromContext(uri?: vscode.Uri): vscode.Uri | undefined {
   if (uri) return uri;
@@ -12,44 +12,44 @@ function ensureUriFromContext(uri?: vscode.Uri): vscode.Uri | undefined {
 
 export function activate(context: vscode.ExtensionContext) {
   const disposable = vscode.commands.registerCommand(
-    'rubysyn-extension.codeGen',
+    "rubysyn-extension.codeGen",
     async (clickedUri?: vscode.Uri) => {
       try {
         // 1) figure out which file was selected (or current editor)
         const fileUri = ensureUriFromContext(clickedUri);
         if (!fileUri) {
-          vscode.window.showErrorMessage('No file selected or active.');
+          vscode.window.showErrorMessage("No file selected or active.");
           return;
         }
 
         // only allow files on disk
-        if (fileUri.scheme !== 'file') {
-          vscode.window.showErrorMessage('Only local files are supported.');
+        if (fileUri.scheme !== "file") {
+          vscode.window.showErrorMessage("Only local files are supported.");
           return;
         }
 
         const srcPath = fileUri.fsPath;
         if (!fs.existsSync(srcPath) || !fs.statSync(srcPath).isFile()) {
-          vscode.window.showErrorMessage('Selected item is not a file.');
+          vscode.window.showErrorMessage("Selected item is not a file.");
           return;
         }
 
         // 2) read file contents (utf8) and prepare base64 payload
-        const raw = fs.readFileSync(srcPath, 'utf8');
-        const b64 = Buffer.from(raw, 'utf8').toString('base64');
+        const raw = fs.readFileSync(srcPath, "utf8");
+        const b64 = Buffer.from(raw, "utf8").toString("base64");
 
         // 3) compute a safe destination in WSL under ~/rbsyn/tmp_bench/
-        const base = path.parse(srcPath).base.replace(/\s+/g, '_');
+        const base = path.parse(srcPath).base.replace(/\s+/g, "_");
         const ts = new Date()
           .toISOString()
-          .replace(/[:.]/g, '-')
-          .replace('T', '_')
-          .replace('Z', '');
+          .replace(/[:.]/g, "-")
+          .replace("T", "_")
+          .replace("Z", "");
         const baseWithTs =
-          (base.endsWith('.rb') ? base.slice(0, -3) : base) + `_${ts}.rb`;
+          (base.endsWith(".rb") ? base.slice(0, -3) : base) + `_${ts}.rb`;
 
-        const wslRepoRoot = '/home/nisch/rbsyn';
-        const wslRelDir = 'tmp_bench';
+        const wslRepoRoot = "/home/nisch/rbsyn";
+        const wslRelDir = "tmp_bench";
         const wslRelPath = `${wslRelDir}/${baseWithTs}`;
         const wslAbsPath = `${wslRepoRoot}/${wslRelPath}`;
 
@@ -58,8 +58,8 @@ export function activate(context: vscode.ExtensionContext) {
         //    - decodes to ~/rbsyn/tmp_bench/<file>.rb
         //    - runs the rake bench with TEST= that file
         const term = vscode.window.createTerminal({
-          name: 'RbSyn (WSL)',
-          shellPath: 'wsl.exe',
+          name: "RbSyn (WSL)",
+          shellPath: "wsl.exe",
         });
         term.show(true);
 
@@ -81,7 +81,7 @@ EOF_RBSYN
 
   echo "[RbSyn] Running bench on ${wslRelPath}"
   cd "${wslRepoRoot}"
-  CONSOLE_LOG=1 bundle exec rake bench TEST="${wslRelPath}"
+  bundle exec rake bench TEST="${wslRelPath}"
 '`.trim();
 
         term.sendText(wslScript);
