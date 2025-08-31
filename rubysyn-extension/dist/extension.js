@@ -16657,6 +16657,9 @@ function ensureUriFromContext(uri) {
   const ed = vscode.window.activeTextEditor;
   return ed?.document?.uri;
 }
+function stripAnsi(input) {
+  return input.replace(/\x1b\[[0-9;]*m/g, "").trim();
+}
 async function runRbSyn(filePath) {
   const form = new import_form_data.default();
   form.append("file", fs2.createReadStream(filePath));
@@ -16671,6 +16674,20 @@ async function runRbSyn(filePath) {
   try {
     const data = JSON.parse(text);
     console.log("RbSyn output:", data);
+    let main_output = data["main_output"];
+    main_output = main_output.split(",");
+    const header = main_output[0] + " and" + main_output[1];
+    const failures = stripAnsi(main_output[2]);
+    const errors = stripAnsi(main_output[3]);
+    const skips = stripAnsi(main_output[4]);
+    const description = failures + ", " + errors + ", " + skips;
+    const options = {
+      detail: description,
+      modal: true
+    };
+    vscode.window.showInformationMessage(header, options, ...["Ok"]).then((item) => {
+      console.log("Main output: ", data["main_output"]);
+    });
   } catch (e2) {
     console.error("Failed to parse JSON:", e2);
   }
