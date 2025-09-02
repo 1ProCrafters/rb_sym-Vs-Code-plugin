@@ -21,10 +21,14 @@ function stripAnsi(input: string): string {
 }
 
 async function runRbSyn(filePath: string) {
+  const cfg = () => vscode.workspace.getConfiguration("myExt");
+  const server = cfg().get<string>("server", "Hello");
+
+  const endpoint = server + "/run_rbsyn";
   const form = new FormData();
   form.append("file", fs.createReadStream(filePath));
 
-  const response = await fetch("http://localhost:4567/run_rbsyn", {
+  const response = await fetch(endpoint, {
     method: "POST",
     body: form,
     headers: form.getHeaders(), // Important!
@@ -40,20 +44,23 @@ async function runRbSyn(filePath: string) {
     let main_output = data["main_output"];
     main_output = main_output.split(",");
 
-    const header = main_output[0] + " and" + main_output[1];
-    const failures = stripAnsi(main_output[2]);
-    const errors = stripAnsi(main_output[3]);
-    const skips = stripAnsi(main_output[4]);
-    const description = failures + ", " + errors + ", " + skips;
-    const options: vscode.MessageOptions = {
-      detail: description,
-      modal: true,
-    };
+    const message =
+      main_output[0] +
+      " and" +
+      main_output[1] +
+      ": " +
+      stripAnsi(main_output[2]) +
+      ", " +
+      stripAnsi(main_output[3]) +
+      ", " +
+      stripAnsi(main_output[4]) +
+      ".";
+    const options: vscode.MessageOptions = { modal: false };
 
     vscode.window
-      .showInformationMessage(header, options, ...["Ok"])
+      .showInformationMessage(message, options, ...["Ok"])
       .then((item) => {
-        console.log("Main output: ", data["main_output"]);
+        console.log("Main output: ", data["main_output"] + ".");
       });
   } catch (e) {
     console.error("Failed to parse JSON:", e);

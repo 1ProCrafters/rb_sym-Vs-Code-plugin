@@ -16661,9 +16661,12 @@ function stripAnsi(input) {
   return input.replace(/\x1b\[[0-9;]*m/g, "").trim();
 }
 async function runRbSyn(filePath) {
+  const cfg = () => vscode.workspace.getConfiguration("myExt");
+  const server = cfg().get("server", "Hello");
+  const endpoint = server + "/run_rbsyn";
   const form = new import_form_data.default();
   form.append("file", fs2.createReadStream(filePath));
-  const response = await fetch("http://localhost:4567/run_rbsyn", {
+  const response = await fetch(endpoint, {
     method: "POST",
     body: form,
     headers: form.getHeaders()
@@ -16676,17 +16679,10 @@ async function runRbSyn(filePath) {
     console.log("RbSyn output:", data);
     let main_output = data["main_output"];
     main_output = main_output.split(",");
-    const header = main_output[0] + " and" + main_output[1];
-    const failures = stripAnsi(main_output[2]);
-    const errors = stripAnsi(main_output[3]);
-    const skips = stripAnsi(main_output[4]);
-    const description = failures + ", " + errors + ", " + skips;
-    const options = {
-      detail: description,
-      modal: true
-    };
-    vscode.window.showInformationMessage(header, options, ...["Ok"]).then((item) => {
-      console.log("Main output: ", data["main_output"]);
+    const message = main_output[0] + " and" + main_output[1] + ": " + stripAnsi(main_output[2]) + ", " + stripAnsi(main_output[3]) + ", " + stripAnsi(main_output[4]) + ".";
+    const options = { modal: false };
+    vscode.window.showInformationMessage(message, options, ...["Ok"]).then((item) => {
+      console.log("Main output: ", data["main_output"] + ".");
     });
   } catch (e2) {
     console.error("Failed to parse JSON:", e2);

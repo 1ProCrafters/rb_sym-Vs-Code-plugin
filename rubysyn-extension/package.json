@@ -25,6 +25,16 @@
           "group": "navigation"
         }
       ]
+    },
+    "configuration": {
+      "title": "RbSyn Web Server",
+      "properties": {
+        "myExt.server": {
+          "type": "string",
+          "default": "http://127.0.0.1:4567",
+          "description": "The URL of the RbSyn web server."
+        }
+      }
     }
   },
   "scripts": {
